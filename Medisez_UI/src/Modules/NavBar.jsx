@@ -1,7 +1,35 @@
 import logo_main from '../img/logo_main.svg';
 import search from '../img/search.png';
-
+import {Dropdown} from 'primereact';
+import { useEffect, useState } from 'react';
+import { authFetch } from '../utils/authfetch';
 const NavBar = () => {
+  const [selectedCity, setSelectedCity] = useState(null);
+  const [cities, setCities] = useState([]);
+  const fetchCities=async()=>{
+    var results=await authFetch('https://catfact.ninja/fact','GET');
+    console.log(results,'results');
+    const staticCities = [
+      { CityId: 1, City: "Visakhapatnam", IsActive: true, IsDefault: true },
+      { CityId: 2, City: "Vizianagaram", IsActive: true, IsDefault: false },
+      { CityId: 3, City: "Srikakulam", IsActive: true, IsDefault: false },
+    ];
+    const citiesWithCityId = staticCities.map(city => ({
+      name: city.City, 
+      code: city.CityId, 
+    }));
+    const defaultCity = staticCities.find(city => city.IsDefault);
+    if (defaultCity) {
+      setSelectedCity({
+        name: defaultCity.City,
+        code: defaultCity.CityId,
+      });
+    }
+    setCities(citiesWithCityId);
+  }
+  useEffect(()=>{
+    fetchCities()
+  },[])
   return (
     <div class="fixed-top">
       <header class="header">
@@ -73,13 +101,34 @@ const NavBar = () => {
       <div class="search-sec">
         <div class="search-box">
           <form action="#" style={{justifyContent: 'center'}}>
-            <div class="form-group search-location">
-              <input
-                type="text"
-                class="form-control s-loc"
-                placeholder="Visakhapatnam"
-              />
-            </div>
+<div>
+        <Dropdown
+          value={selectedCity}
+          onChange={(e) => setSelectedCity(e.value)}
+          options={cities}
+          optionLabel="name"
+          dropdownIcon='none'
+          showClear
+          placeholder="Select a City"
+          style={{
+            width: '200px',
+            height: '46px',
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+            padding: '12px',
+            boxSizing: 'border-box',
+            backgroundImage: 'none',
+            fontfamily: 'Poppins',
+            color: '#11157a'
+          }}
+          panelStyle={{
+            backgroundColor: 'green', // Ensure the dropdown background is white
+            border: '1px solid #ccc', // Add a border for clarity
+            zIndex: 100000, // Ensure it appears above other elements
+          }}
+        />
+      </div>
+
             <div class="custom-select cs1">
               <select>
                 <option value="0">Doctors</option>
