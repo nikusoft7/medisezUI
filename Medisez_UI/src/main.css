@@ -8868,6 +8868,6 @@ html.menu-opened body {
 
 .search-sec {
     padding: 20px 10px 0px 30px;
-    background: #fcfcff;
+    /* background: #fcfcff; */
     box-shadow: 0px 0px 0px #00000026;
 }

@@ -6,30 +6,73 @@ import { authFetch } from '../utils/authfetch';
 const NavBar = () => {
   const [selectedCity, setSelectedCity] = useState(null);
   const [cities, setCities] = useState([]);
+  const [userTypes, setUserTypes] = useState([]);
+  const [defaultuserTypes, setDefaultUserTypes] = useState([]);
+  const [selectedUserType, setSelectedUserType] = useState(null);
+
+
   const fetchCities=async()=>{
     var results=await authFetch('https://catfact.ninja/fact','GET');
     console.log(results,'results');
-    const staticCities = [
-      { CityId: 1, City: "Visakhapatnam", IsActive: true, IsDefault: true },
-      { CityId: 2, City: "Vizianagaram", IsActive: true, IsDefault: false },
-      { CityId: 3, City: "Srikakulam", IsActive: true, IsDefault: false },
-    ];
-    const citiesWithCityId = staticCities.map(city => ({
-      name: city.City, 
-      code: city.CityId, 
+    const staticCities = [{"CityId":1,"City":"Visakhapatnam","IsActive":true,"IsDefault":true,"UserTypes":"[{\"CityId\":1,\"UserTypeId\":1,\"UserType\":\"Doctor\",\"IsActive\":true},{\"CityId\":1,\"UserTypeId\":2,\"UserType\":\"Hospital\",\"IsActive\":true},{\"CityId\":1,\"UserTypeId\":3,\"UserType\":\"Diagnostics\",\"IsActive\":true},{\"CityId\":1,\"UserTypeId\":4,\"UserType\":\"Pharmacies\",\"IsActive\":true}]"},{"CityId":2,"City":"Vizianagaram","IsActive":true,"IsDefault":false,"UserTypes":"[{\"CityId\":2,\"UserTypeId\":1,\"UserType\":\"Doctor\",\"IsActive\":true},{\"CityId\":2,\"UserTypeId\":2,\"UserType\":\"Hospital\",\"IsActive\":true},{\"CityId\":2,\"UserTypeId\":3,\"UserType\":\"Diagnostics\",\"IsActive\":true}]"},{"CityId":3,"City":"Srikakulam","IsActive":true,"IsDefault":false,"UserTypes":"[{\"CityId\":3,\"UserTypeId\":1,\"UserType\":\"Doctor\",\"IsActive\":true},{\"CityId\":3,\"UserTypeId\":2,\"UserType\":\"Hospital\",\"IsActive\":true},{\"CityId\":3,\"UserTypeId\":3,\"UserType\":\"Diagnostics\",\"IsActive\":true},{\"CityId\":3,\"UserTypeId\":4,\"UserType\":\"Pharmacies\",\"IsActive\":true}]"}]
+    const citiesWithCityId = staticCities.map((city) => ({
+      name: city.City,
+      code: city.CityId,
     }));
-    const defaultCity = staticCities.find(city => city.IsDefault);
+    
+    // Parse and map UserTypes for each city
+    const userTypes = staticCities
+      .flatMap((city) =>
+        JSON.parse(city.UserTypes).filter((userType) => userType.IsActive).map((userType) => ({
+          code: userType.UserTypeId,
+          name: userType.UserType,
+          cityId: userType.CityId,
+        }))
+      );
+    
+    // Find the default city
+    const defaultCity = staticCities.find((city) => city.IsDefault);
+    
     if (defaultCity) {
       setSelectedCity({
         name: defaultCity.City,
         code: defaultCity.CityId,
       });
+    
+      // Find UserTypes for the default city
+      const defaultUserTypes = userTypes.filter((user) => user.cityId === defaultCity.CityId);
+      setDefaultUserTypes(defaultUserTypes)
+      if (defaultUserTypes.length > 0) {
+        setSelectedUserType(
+          defaultUserTypes[0]
+        );
+      }
     }
+    
+    // Set the options
     setCities(citiesWithCityId);
+    setUserTypes(userTypes);
   }
   useEffect(()=>{
     fetchCities()
   },[])
+  useEffect(()=>
+  {
+ const ChangeUserTypes=async()=>{
+  changeUserTypeByCityId()
+ }
+ ChangeUserTypes();
+
+  },[selectedCity])
+  const changeUserTypeByCityId=async()=>{
+    const defaultUserTypes = userTypes.filter((user) => user.cityId === selectedCity.code);
+    setDefaultUserTypes(defaultUserTypes)
+    if (defaultUserTypes.length > 0) {
+      setSelectedUserType(
+        defaultUserTypes[0]
+      );
+    }
+  }
   return (
     <div class="fixed-top">
       <header class="header">
@@ -110,6 +153,8 @@ const NavBar = () => {
           dropdownIcon='none'
           showClear
           placeholder="Select a City"
+          filter // Enable search functionality
+          filterBy="name" // Specify the field to filter by
           style={{
             width: '200px',
             height: '46px',
@@ -122,26 +167,89 @@ const NavBar = () => {
             color: '#11157a'
           }}
           panelStyle={{
-            backgroundColor: 'green', // Ensure the dropdown background is white
-            border: '1px solid #ccc', // Add a border for clarity
-            zIndex: 100000, // Ensure it appears above other elements
+            backgroundColor: '#ffffff !important',
+            border: '1px solid #ddd !important',
+            borderRadius: '6px !important',
+            padding: '8px 0 !important',
+            boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.2) !important',
+            zIndex: '100000 !important',
+            maxHeight: '230px ',
+            overflowY: 'auto ',
+            position: 'absolute !important', // Ensure the panel is positioned correctly
+            top: '100% !important', // Aligns the panel below the dropdown
+            left: '0 !important', // Aligns the panel with the dropdown
+            width: 'calc(100% - 2px) !important', // Matches the dropdown width
           }}
+          itemTemplate={(option) => (
+            <div
+              style={{
+                padding: '8px 16px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                color: '#11157a',
+                backgroundColor: '#f9f9f9',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e6e6e6')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f9f9f9')}
+            >
+              {option.name}
+            </div>
+          )}
         />
       </div>
 
-            <div class="custom-select cs1">
-              <select>
-                <option value="0">Doctors</option>
-                <option value="1">Doctors</option>
-                <option value="2">Hospitals</option>
-                <option value="3">Specialities</option>
-              </select>
-              <div class="select-selected">Doctors</div>
-              <div class="select-items select-hide">
-                <div>Doctors</div>
-                <div>Hospitals</div>
-                <div>Specialities</div>
-              </div>
+            <div >
+              <Dropdown
+          value={selectedUserType}
+          onChange={(e) => setSelectedUserType(e.value)}
+          options={defaultuserTypes}
+          optionLabel="name"
+          dropdownIcon='none'
+          showClear
+          placeholder="Select a User type"
+          filter // Enable search functionality
+          filterBy="name" // Specify the field to filter by
+          style={{
+            width: '200px',
+            height: '46px',
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+            padding: '12px',
+            boxSizing: 'border-box',
+            backgroundImage: 'none',
+            fontfamily: 'Poppins',
+            color: '#11157a'
+          }}
+          panelStyle={{
+            backgroundColor: '#ffffff !important',
+            border: '1px solid #ddd !important',
+            borderRadius: '6px !important',
+            padding: '8px 0 !important',
+            boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.2) !important',
+            zIndex: '100000 !important',
+            maxHeight: '230px' ,
+            overflowY: 'auto ',
+            position: 'absolute !important', // Ensure the panel is positioned correctly
+            top: '100% !important', // Aligns the panel below the dropdown
+            left: '0 !important', // Aligns the panel with the dropdown
+            width: 'calc(100% - 2px) !important', // Matches the dropdown width
+          }}
+          itemTemplate={(option) => (
+            <div
+              style={{
+                padding: '8px 16px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                color: '#11157a',
+                backgroundColor: '#f9f9f9',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e6e6e6')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f9f9f9')}
+            >
+              {option.name}
+            </div>
+          )}
+        />
             </div>
             <div class="form-group search-info">
               <input
