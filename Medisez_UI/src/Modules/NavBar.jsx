@@ -207,8 +207,8 @@ const NavBar = () => {
           dropdownIcon='none'
           showClear
           placeholder="Select a User type"
-          filter // Enable search functionality
-          filterBy="name" // Specify the field to filter by
+          // filter // Enable search functionality
+          // filterBy="name" // Specify the field to filter by
           style={{
             width: '200px',
             height: '46px',
